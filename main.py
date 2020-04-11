@@ -1,5 +1,7 @@
 import asyncio
 import io
+from random import randint
+
 import requests
 import discord
 import datetime
@@ -10,8 +12,8 @@ import sqlalchemy.ext.declarative as dec
 from data import db_session
 from data.users import User
 
-TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.Xn79nQ.peYKjTtUz3EErirA10z_8fCNcgU"
-
+TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpG_mw.8dtO7uDgdZiHHP9UYEnyAHsA64o"
+prefix = '!'
 
 def get_my_files(content):
     f = io.BytesIO(content)
@@ -54,13 +56,31 @@ class YLBotClient(discord.Client):
     async def on_message(self, message):
         if message.author == self.user:
             return
+        elif message.content[0] == prefix:
+            command = message.content[1:].split()
+            print(prefix, command)
+            if command[0].lower() == 'rank':
+                session = db_session.create_session()
+                user = session.query(User).filter(User.name == str(message.author))[0]
+                await message.channel.send(f'Ваш уровень: {user.lvl}, {user.xp}/{(user.lvl + 1) * 100} xp')
+                session.commit()
+            elif command[0].lower() == 'leaderboard':
+                session = db_session.create_session()
+                users = session.query(User).all()
+                if len(users) > 10:
+                    users = users[:10]
+                m = ''
+                for user in users:
+                    m += f'{user.name[:-5]}: {user.lvl} lvl, {user.xp}/{(user.lvl + 1) * 100} xp\n'
+                await message.channel.send(m)
         else:
             session = db_session.create_session()
-            print(str(message.author))
             user = session.query(User).filter(User.name == str(message.author))[0]
-            print(user)
-            user.xp += 10
-            print(user.xp)
+            print(str(message.author), user.xp)
+            user.xp += randint(7, 13)
+            if user.xp >= (user.lvl + 1) * 100:
+                user.lvl += 1
+                user.xp = 0
             session.commit()
 
 

@@ -10,6 +10,7 @@ class User(SqlAlchemyBase):
                            primary_key=True, autoincrement=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     xp = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+    lvl = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
