@@ -59,12 +59,12 @@ class YLBotClient(discord.Client):
         elif message.content[0] == prefix:
             command = message.content[1:].split()
             print(prefix, command)
-            if command[0].lower() == 'rank':
+            if command[0].lower() in ['lvl', 'level']:
                 session = db_session.create_session()
                 user = session.query(User).filter(User.name == str(message.author))[0]
                 await message.channel.send(f'Ваш уровень: {user.lvl}, {user.xp}/{(user.lvl + 1) * 100} xp')
                 session.commit()
-            elif command[0].lower() == 'leaderboard':
+            elif command[0].lower() in ['leaderboard', 'top']:
                 session = db_session.create_session()
                 users = session.query(User).all()
                 if len(users) > 10:
