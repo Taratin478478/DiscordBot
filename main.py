@@ -14,8 +14,8 @@ from data import db_session
 from data.users import User
 import youtube_dl
 
-TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpoD_g.OwU7nAI-rlaAIwrCHcswcxjUo0A"
-YT_KEY = 'AIzaSyAI-dchFZTy877OsHs8PJM_N3gY1abF8mY'
+TOKEN = ''
+YT_KEY = ''
 prefix = '!'
 youtube = YoutubeAPI(YT_KEY)
 
