@@ -10,9 +10,9 @@
 # ---------------------------------------------------------------------------
 
 import json
-from urlparse import urlparse
-import urllib
-import urllib2
+from urllib.parse import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 
 class YoutubeAPI:
@@ -29,16 +29,8 @@ class YoutubeAPI:
 
     page_info = {}
 
-    def __init__(self, params):
-
-        if not params:
-            raise ValueError('The configuration options must be an array..')
-
-        if 'key' not in params:
-            raise ValueError('Google API key is required, please visit http://code.google.com/apis/console')
-
-        self.youtube_key = params['key']
-
+    def __init__(self, key):
+        self.youtube_key = key
     def get_video_info(self, video_id):
 
         api_url = self.get_api('videos.list')
@@ -54,7 +46,7 @@ class YoutubeAPI:
     def get_videos_info(self, video_ids):
 
         ids = video_ids
-        if not isinstance(video_ids, basestring):
+        if not isinstance(video_ids, str):
             ids = video_ids.join(',')
 
         api_url = self.get_api('videos.list')
@@ -278,7 +270,7 @@ class YoutubeAPI:
 
         params['key'] = self.youtube_key
 
-        f = urllib2.urlopen(url + "?" + urllib.urlencode(params))
+        f = urllib.request.urlopen(url + "?" + urllib.parse.urlencode(params))
         data = f.read()
         f.close()
 

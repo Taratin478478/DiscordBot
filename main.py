@@ -13,10 +13,11 @@ from youtubeapi import YoutubeAPI
 from data import db_session
 from data.users import User
 
-TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpG_mw.8dtO7uDgdZiHHP9UYEnyAHsA64o"
+TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpoD_g.OwU7nAI-rlaAIwrCHcswcxjUo0A"
 YT_KEY = 'AIzaSyAI-dchFZTy877OsHs8PJM_N3gY1abF8mY'
 prefix = '!'
-youtube = YoutubeAPI('key': '/* Your API key here */')
+youtube = YoutubeAPI(YT_KEY)
+
 
 def get_my_files(content):
     f = io.BytesIO(content)
@@ -76,7 +77,8 @@ class YLBotClient(discord.Client):
                     m += f'{user.name[:-5]}: {user.lvl} lvl, {user.xp}/{(user.lvl + 1) * 100} xp\n'
                 await message.channel.send(m)
             elif command[0].lower() == 'play':
-
+                result = youtube.search_videos(' '.join(command[1:]))
+                print(result)
         else:
             session = db_session.create_session()
             user = session.query(User).filter(User.name == str(message.author))[0]
