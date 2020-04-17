@@ -9,11 +9,14 @@ import sqlalchemy
 import sqlalchemy.orm as orm
 from sqlalchemy.orm import Session
 import sqlalchemy.ext.declarative as dec
+from youtubeapi import YoutubeAPI
 from data import db_session
 from data.users import User
 
 TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpG_mw.8dtO7uDgdZiHHP9UYEnyAHsA64o"
+YT_KEY = 'AIzaSyAI-dchFZTy877OsHs8PJM_N3gY1abF8mY'
 prefix = '!'
+youtube = YoutubeAPI('key': '/* Your API key here */')
 
 def get_my_files(content):
     f = io.BytesIO(content)
@@ -45,8 +48,6 @@ class YLBotClient(discord.Client):
                     session.add(user)
             session.commit()
 
-
-
     async def on_member_join(self, member):
         await member.create_dm()
         await member.dm_channel.send(
@@ -62,7 +63,8 @@ class YLBotClient(discord.Client):
             if command[0].lower() in ['lvl', 'level']:
                 session = db_session.create_session()
                 user = session.query(User).filter(User.name == str(message.author))[0]
-                await message.channel.send(f'Ваш уровень: {user.lvl}, {user.xp}/{(user.lvl + 1) * 100} xp')
+                await message.channel.send(
+                    f'Ваш уровень: {user.lvl}, {user.xp}/{(user.lvl + 1) * 100} xp')
                 session.commit()
             elif command[0].lower() in ['leaderboard', 'top']:
                 session = db_session.create_session()
@@ -73,6 +75,8 @@ class YLBotClient(discord.Client):
                 for user in users:
                     m += f'{user.name[:-5]}: {user.lvl} lvl, {user.xp}/{(user.lvl + 1) * 100} xp\n'
                 await message.channel.send(m)
+            elif command[0].lower() == 'play':
+
         else:
             session = db_session.create_session()
             user = session.query(User).filter(User.name == str(message.author))[0]
