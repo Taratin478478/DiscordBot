@@ -12,6 +12,7 @@ import sqlalchemy.ext.declarative as dec
 from youtubeapi import YoutubeAPI
 from data import db_session
 from data.users import User
+import youtube_dl
 
 TOKEN = "NjkzMzYwNjMyOTQ2MzYwNDEx.XpoD_g.OwU7nAI-rlaAIwrCHcswcxjUo0A"
 YT_KEY = 'AIzaSyAI-dchFZTy877OsHs8PJM_N3gY1abF8mY'
@@ -77,17 +78,26 @@ class YLBotClient(discord.Client):
                     m += f'{user.name[:-5]}: {user.lvl} lvl, {user.xp}/{(user.lvl + 1) * 100} xp\n'
                 await message.channel.send(m)
             elif command[0].lower() == 'play':
-                result = youtube.search_videos(' '.join(command[1:]))
-                print(result)
-        else:
-            session = db_session.create_session()
-            user = session.query(User).filter(User.name == str(message.author))[0]
-            print(str(message.author), user.xp)
-            user.xp += randint(7, 13)
-            if user.xp >= (user.lvl + 1) * 100:
-                user.lvl += 1
-                user.xp = 0
-            session.commit()
+                vc = message.author.voice
+                if vc is None:
+                    await message.channel.send('Вы не подключены к голосовому каналу')
+                else:
+                    result = youtube.search_videos(' '.join(command[1:]))[0]['id']['videoId']
+                    with youtube_dl.YoutubeDL() as ydl:
+                        song_info = ydl.extract_info(
+                            "https://www.youtube.com/watch?v=" + result, download=False)
+                    print(song_info)
+                    vc = await vc.channel.connect()
+                    vc.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
+                                                   executable="D:/ffmpeg/bin/ffmpeg.exe"))
+        session = db_session.create_session()
+        user = session.query(User).filter(User.name == str(message.author))[0]
+        print(str(message.author), user.xp)
+        user.xp += randint(7, 13)
+        if user.xp >= (user.lvl + 1) * 100:
+            user.lvl += 1
+            user.xp = 0
+        session.commit()
 
 
 db_session.global_init("db/blogs.sqlite")

@@ -31,6 +31,7 @@ class YoutubeAPI:
 
     def __init__(self, key):
         self.youtube_key = key
+
     def get_video_info(self, video_id):
 
         api_url = self.get_api('videos.list')
