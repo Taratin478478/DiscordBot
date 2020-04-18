@@ -14,8 +14,8 @@ from data import db_session
 from data.users import User
 import youtube_dl
 
-TOKEN = ''
-YT_KEY = ''
+TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.XpouWA.EYJSPiQpPeje9zF_4dCUzS2Opq4'
+YT_KEY = 'AIzaSyCDFbSMsqX6VQEWuOB5Ik_YwwfHnR3OoKs'
 prefix = '!'
 youtube = YoutubeAPI(YT_KEY)
 
@@ -61,7 +61,6 @@ class YLBotClient(discord.Client):
             return
         elif message.content[0] == prefix:
             command = message.content[1:].split()
-            print(prefix, command)
             if command[0].lower() in ['lvl', 'level']:
                 session = db_session.create_session()
                 user = session.query(User).filter(User.name == str(message.author))[0]
@@ -78,21 +77,28 @@ class YLBotClient(discord.Client):
                     m += f'{user.name[:-5]}: {user.lvl} lvl, {user.xp}/{(user.lvl + 1) * 100} xp\n'
                 await message.channel.send(m)
             elif command[0].lower() == 'play':
-                vc = message.author.voice
-                if vc is None:
+                self.vc = message.author.voice
+                print(self.vc)
+                self.cvc = None
+                if self.voice_clients:
+                    self.cvc = list(filter(lambda x: x.guild == message.author.guild, self.voice_clients))[0]
+                if self.vc is None:
                     await message.channel.send('Вы не подключены к голосовому каналу')
+                elif self.cvc is not None and self.vc.channel == self.cvc.channel:
+                    pass
                 else:
                     result = youtube.search_videos(' '.join(command[1:]))[0]['id']['videoId']
                     with youtube_dl.YoutubeDL() as ydl:
                         song_info = ydl.extract_info(
                             "https://www.youtube.com/watch?v=" + result, download=False)
-                    print(song_info)
-                    vc = await vc.channel.connect()
-                    vc.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
+                    print(self.cvc, self.vc)
+                    if self.cvc is not None and self.cvc.channel != self.vc.channel:
+                        await self.cvc.disconnect()
+                    self.player = await self.vc.channel.connect()
+                    self.player.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
                                                    executable="D:/ffmpeg/bin/ffmpeg.exe"))
         session = db_session.create_session()
         user = session.query(User).filter(User.name == str(message.author))[0]
-        print(str(message.author), user.xp)
         user.xp += randint(7, 13)
         if user.xp >= (user.lvl + 1) * 100:
             user.lvl += 1
