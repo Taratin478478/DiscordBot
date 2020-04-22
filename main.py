@@ -1,5 +1,6 @@
 import asyncio
 import io
+import os
 from random import randint
 
 import requests
@@ -14,9 +15,9 @@ from data import db_session
 from data.users import User
 import youtube_dl
 
-TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.XpouWA.EYJSPiQpPeje9zF_4dCUzS2Opq4'
-YT_KEY = 'AIzaSyCDFbSMsqX6VQEWuOB5Ik_YwwfHnR3OoKs'
-prefix = '!'
+TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.Xpq3qg.Mie5NkgBpm6p1PGhFenOXbCXmW0'
+YT_KEY = 'AIzaSyBezs1L9G1bz6Q0LCseDUgVrdSJeJOL9kc'
+prefix = '-'
 youtube = YoutubeAPI(YT_KEY)
 
 
@@ -32,6 +33,9 @@ class YLBotClient(discord.Client):
     def __init__(self):
         super().__init__()
         self.timers = []
+        self.queue = asyncio.Queue()
+        self.play_next_song = asyncio.Event()
+        self.loop.create_task(self.audio_player_task())
 
     async def on_ready(self):
         print(f'{self.user} has connected to Discord!')
@@ -39,8 +43,8 @@ class YLBotClient(discord.Client):
             print(
                 f'{self.user} подключились к чату:\n'
                 f'{guild.name}(id: {guild.id})')
-            await guild.system_channel.send(
-                f'{str(self.user)[:-5]} подключился и готов ко всему')
+            #            await guild.system_channel.send(
+            #                f'{str(self.user)[:-5]} подключился и готов ко всему')
             session = db_session.create_session()
             members = [user.name for user in session.query(User).all()]
             for m in guild.members:
@@ -56,6 +60,26 @@ class YLBotClient(discord.Client):
             f'Привет, {member.name}!'
         )
 
+    async def audio_player_task(self):
+        while True:
+            self.play_next_song.clear()
+            current = await self.queue.get()
+            self.player = await self.vc.channel.connect()
+            ydl_options = {
+                'format': 'bestaudio/best'
+            }
+
+            with youtube_dl.YoutubeDL(ydl_options) as ydl:
+                song_info = ydl.extract_info(
+                    "https://www.youtube.com/watch?v=" + current)
+                filename = ydl.prepare_filename(song_info)
+                print(filename)
+            self.player.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
+                                                    executable="D:/ffmpeg/bin/ffmpeg.exe"))
+            await self.play_next_song.wait()
+            await self.vc.channel.disconnect()
+            os.remove(filename)
+
     async def on_message(self, message):
         if message.author == self.user:
             return
@@ -69,7 +93,7 @@ class YLBotClient(discord.Client):
                 session.commit()
             elif command[0].lower() in ['leaderboard', 'top']:
                 session = db_session.create_session()
-                users = session.query(User).all()
+                users = session.query(User).all().sort()
                 if len(users) > 10:
                     users = users[:10]
                 m = ''
@@ -78,25 +102,11 @@ class YLBotClient(discord.Client):
                 await message.channel.send(m)
             elif command[0].lower() == 'play':
                 self.vc = message.author.voice
-                print(self.vc)
-                self.cvc = None
-                if self.voice_clients:
-                    self.cvc = list(filter(lambda x: x.guild == message.author.guild, self.voice_clients))[0]
                 if self.vc is None:
                     await message.channel.send('Вы не подключены к голосовому каналу')
-                elif self.cvc is not None and self.vc.channel == self.cvc.channel:
-                    pass
                 else:
                     result = youtube.search_videos(' '.join(command[1:]))[0]['id']['videoId']
-                    with youtube_dl.YoutubeDL() as ydl:
-                        song_info = ydl.extract_info(
-                            "https://www.youtube.com/watch?v=" + result, download=False)
-                    print(self.cvc, self.vc)
-                    if self.cvc is not None and self.cvc.channel != self.vc.channel:
-                        await self.cvc.disconnect()
-                    self.player = await self.vc.channel.connect()
-                    self.player.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
-                                                   executable="D:/ffmpeg/bin/ffmpeg.exe"))
+                    await self.queue.put(result)
         session = db_session.create_session()
         user = session.query(User).filter(User.name == str(message.author))[0]
         user.xp += randint(7, 13)
