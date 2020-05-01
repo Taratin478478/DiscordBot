@@ -10,15 +10,15 @@ import sqlalchemy
 import sqlalchemy.orm as orm
 from sqlalchemy.orm import Session
 import sqlalchemy.ext.declarative as dec
-from youtubeapi import YoutubeAPI
 from data import db_session
 from data.users import User
-import youtube_dl
+import os
+from yandex_music import Client
 
-TOKEN = ''
-YT_KEY = ''
+TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.XqXOwg.BNZQY7pto-pfeUTWxbDhBAyksXM'
+YM_TOKEN = 'AgAAAAAqsmX2AAG8XgVJHnWbDk4nh0e3GuLxovk'
 prefix = '-'
-youtube = YoutubeAPI(YT_KEY)
+ya_music = Client.from_token(YM_TOKEN)
 
 
 def get_my_files(content):
@@ -65,20 +65,20 @@ class YLBotClient(discord.Client):
             self.play_next_song.clear()
             current = await self.queue.get()
             self.player = await self.vc.channel.connect()
-            ydl_options = {
-                'format': 'bestaudio/best'
-            }
+            search_result = ya_music.search(text=current[0])
+            track = search_result.best.result
+            await current[1].send('Включаю: ' + ', '.join([a.name for a in track.artists]) + ' - ' + track.title)
+            info_list = ya_music.tracks_download_info(track.id)
+            filtered_info_list = list(
+                filter(lambda f: f.codec == "mp3",
+                       sorted(info_list, key=lambda x: -x.bitrate_in_kbps)))
+            download_info = filtered_info_list[0]
 
-            with youtube_dl.YoutubeDL(ydl_options) as ydl:
-                song_info = ydl.extract_info(
-                    "https://www.youtube.com/watch?v=" + current)
-                filename = ydl.prepare_filename(song_info)
-                print(filename)
-            self.player.play(discord.FFmpegPCMAudio(song_info["formats"][0]["url"],
-                                                    executable="D:/ffmpeg/bin/ffmpeg.exe"))
+            # get selected url
+            url = download_info.get_direct_link()
+            self.player.play(discord.FFmpegPCMAudio(url, executable="D:/ffmpeg/bin/ffmpeg.exe"))
             await self.play_next_song.wait()
-            await self.vc.channel.disconnect()
-            os.remove(filename)
+            await self.player.disconnect()
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -105,8 +105,15 @@ class YLBotClient(discord.Client):
                 if self.vc is None:
                     await message.channel.send('Вы не подключены к голосовому каналу')
                 else:
-                    result = youtube.search_videos(' '.join(command[1:]))[0]['id']['videoId']
-                    await self.queue.put(result)
+                    await message.channel.send(' '.join(command[1:]) + ' Добавлено в очередь')
+                    await self.queue.put([command[1:], message.channel])
+            elif command[0].lower() == 'song':
+                await message.channel.send(self.song_info['title'])
+                print(self.song_info)
+            elif command[0].lower() == 'stop':
+                while not self.queue.empty():
+                    self.queue.get_nowait()
+                await self.player.disconnect()
         session = db_session.create_session()
         user = session.query(User).filter(User.name == str(message.author))[0]
         user.xp += randint(7, 13)
