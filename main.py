@@ -66,15 +66,14 @@ class YLBotClient(discord.Client):
             current = await self.queue.get()
             self.player = await self.vc.channel.connect()
             search_result = ya_music.search(text=current[0])
-            track = search_result.best.result
-            await current[1].send('Включаю: ' + ', '.join([a.name for a in track.artists]) + ' - ' + track.title)
-            info_list = ya_music.tracks_download_info(track.id)
+            self.track = search_result.best.result
+            await current[1].send(
+                'Включаю: ' + ', '.join([a.name for a in self.track.artists]) + ' - ' + self.track.title)
+            info_list = ya_music.tracks_download_info(self.track.id)
             filtered_info_list = list(
                 filter(lambda f: f.codec == "mp3",
                        sorted(info_list, key=lambda x: -x.bitrate_in_kbps)))
             download_info = filtered_info_list[0]
-
-            # get selected url
             url = download_info.get_direct_link()
             self.player.play(discord.FFmpegPCMAudio(url, executable="D:/ffmpeg/bin/ffmpeg.exe"))
             await self.play_next_song.wait()
@@ -108,8 +107,7 @@ class YLBotClient(discord.Client):
                     await message.channel.send(' '.join(command[1:]) + ' Добавлено в очередь')
                     await self.queue.put([command[1:], message.channel])
             elif command[0].lower() == 'song':
-                await message.channel.send(self.song_info['title'])
-                print(self.song_info)
+                await message.channel.send(self.track.title)
             elif command[0].lower() == 'stop':
                 while not self.queue.empty():
                     self.queue.get_nowait()
