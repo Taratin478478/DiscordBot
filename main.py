@@ -8,6 +8,7 @@ import discord
 import datetime
 import sqlalchemy
 import sqlalchemy.orm as orm
+from imgurpython import ImgurClient
 from sqlalchemy.orm import Session
 import sqlalchemy.ext.declarative as dec
 from data import db_session
@@ -112,6 +113,14 @@ class YLBotClient(discord.Client):
                 while not self.queue.empty():
                     self.queue.get_nowait()
                 await self.player.disconnect()
+            # -meme СКОРЕЕ ВСЕГО НЕ РАБОТАЕТ, ПОКА НЕ ПРОВЕРЯЛ
+            elif command[0].lower() == 'meme':
+                client_id = '5d6d51c3b6b7dc2'
+                client_secret = '5a419654aae91de31d31a6697f3f07ff1d952748'
+                client = ImgurClient(client_id, client_secret)
+                embed = discord.Embed()
+                embed.set_image(url=client.default_memes())
+                await message.channel.send(embed=embed)
         session = db_session.create_session()
         user = session.query(User).filter(User.name == str(message.author))[0]
         user.xp += randint(7, 13)
