@@ -14,10 +14,10 @@ import sqlalchemy.ext.declarative as dec
 from data import db_session
 from data.users import User
 import os
-from yandex_music import Client
+from yandex_music import Client, Chart, ChartItem
 
-TOKEN = ''
-YM_TOKEN = ''
+TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.XrZcAA.2lmEV7PgL2epZ-7fFpsdZbVxrus'
+YM_TOKEN = 'AgAAAAAqsmX2AAG8Xklspw80fEAAiPb8RY7-qIE'
 prefix = '-'
 ya_music = Client.from_token(YM_TOKEN)
 
@@ -76,7 +76,7 @@ class YLBotClient(discord.Client):
                        sorted(info_list, key=lambda x: -x.bitrate_in_kbps)))
             download_info = filtered_info_list[0]
             url = download_info.get_direct_link()
-            self.player.play(discord.FFmpegPCMAudio(url, executable="D:/ffmpeg/bin/ffmpeg.exe"))
+            self.player.play(discord.FFmpegPCMAudio(url, executable="ffmpeg.exe"))
             await self.play_next_song.wait()
             await self.player.disconnect()
 
@@ -93,7 +93,10 @@ class YLBotClient(discord.Client):
                 session.commit()
             elif command[0].lower() in ['leaderboard', 'top']:
                 session = db_session.create_session()
-                users = session.query(User).all().sort()
+                users = session.query(User).all()
+                m = ''
+                users.sort(key=lambda u: (u.lvl, u.xp), reverse=True)
+                m = ''
                 if len(users) > 10:
                     users = users[:10]
                 m = ''
@@ -107,6 +110,15 @@ class YLBotClient(discord.Client):
                 else:
                     await message.channel.send(' '.join(command[1:]) + ' Добавлено в очередь')
                     await self.queue.put([command[1:], message.channel])
+            elif command[0].lower() == 'chart':
+                self.vc = message.author.voice
+                if self.vc is None:
+                    await message.channel.send('Вы не подключены к голосовому каналу')
+                else:
+                    await message.channel.send('включаю чарт Яндекс.Музыки')
+                chart = ya_music.landing('chart')[0]
+                for c in chart:
+                    await self.queue.put([c.data.track.title, message.channel])
             elif command[0].lower() == 'song':
                 await message.channel.send(self.track.title)
             elif command[0].lower() == 'stop':
