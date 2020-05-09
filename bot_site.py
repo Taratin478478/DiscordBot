@@ -1,7 +1,10 @@
+import os
+
 from flask import render_template, request
 from data.users import User
 from flask import Flask
 from data import db_session
+from waitress import serve
 
 db_session.global_init("db/blogs.sqlite")
 app = Flask(__name__)
@@ -49,4 +52,6 @@ def search():
 
 
 if __name__ == '__main__':
-    app.run()
+    # app.run()
+    port = int(os.environ.get('PORT', 8000))
+    serve(app, host='localhost', port=port)
