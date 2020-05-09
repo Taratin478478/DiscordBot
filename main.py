@@ -1,7 +1,7 @@
 import asyncio
 import io
 import os
-from random import randint
+from random import randint, shuffle
 
 import requests
 import discord
@@ -20,6 +20,10 @@ TOKEN = ''
 YM_TOKEN = ''
 prefix = '-'
 ya_music = Client.from_token(YM_TOKEN)
+imgur_client_id = ''
+imgur_client_secret = ''
+imgur_client = ImgurClient(imgur_client_id, imgur_client_secret)
+
 
 def get_my_files(content):
     f = io.BytesIO(content)
@@ -126,11 +130,11 @@ class YLBotClient(discord.Client):
                 await self.player.disconnect()
             # -meme СКОРЕЕ ВСЕГО НЕ РАБОТАЕТ, ПОКА НЕ ПРОВЕРЯЛ
             elif command[0].lower() == 'meme':
-                client_id = '5d6d51c3b6b7dc2'
-                client_secret = '5a419654aae91de31d31a6697f3f07ff1d952748'
-                client = ImgurClient(client_id, client_secret)
                 embed = discord.Embed()
-                embed.set_image(url=client.default_memes())
+                meme = imgur_client.default_memes()
+                shuffle(meme)
+                meme = meme[0].link
+                embed.set_image(url=meme)
                 await message.channel.send(embed=embed)
         session = db_session.create_session()
         user = session.query(User).filter(User.name == str(message.author))[0]
