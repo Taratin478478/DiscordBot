@@ -16,8 +16,8 @@ from data.users import User
 import os
 from yandex_music import Client, Chart, ChartItem
 
-TOKEN = 'NjkzMzYwNjMyOTQ2MzYwNDEx.XrZcAA.2lmEV7PgL2epZ-7fFpsdZbVxrus'
-YM_TOKEN = 'AgAAAAAqsmX2AAG8Xklspw80fEAAiPb8RY7-qIE'
+TOKEN = ''
+YM_TOKEN = ''
 prefix = '-'
 ya_music = Client.from_token(YM_TOKEN)
 
