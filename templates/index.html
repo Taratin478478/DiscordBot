@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block head_block %}
+<style>
+#customers {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#customers td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #4CAF50;
+  color: white;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<table class="table" id="customers">
+    <thead>
+    <tr>
+        <th scope="col">rating</th>
+        <th scope="col">name</th>
+        <th scope="col">lvl</th>
+        <th scope="col">xp</th>
+    </tr>
+    {% for i in listt: %}
+    <tr>
+        <th scope="row">{{i[3]}}</th>
+        <td>{{i[0]}}</td>
+        <td>{{i[1]}}</td>
+        <td>{{i[2]}}</td>
+    </tr>
+    {% endfor %}
+
+    </thead>
+</table>
+{% endblock %}

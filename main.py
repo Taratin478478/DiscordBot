@@ -21,7 +21,6 @@ YM_TOKEN = 'AgAAAAAqsmX2AAG8Xklspw80fEAAiPb8RY7-qIE'
 prefix = '-'
 ya_music = Client.from_token(YM_TOKEN)
 
-
 def get_my_files(content):
     f = io.BytesIO(content)
     my_files = [
