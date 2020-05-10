@@ -18,10 +18,10 @@ from yandex_music import Client, Chart, ChartItem
 
 TOKEN = ''
 YM_TOKEN = ''
-prefix = '-'
-ya_music = Client.from_token(YM_TOKEN)
 imgur_client_id = ''
 imgur_client_secret = ''
+prefix = '-'
+ya_music = Client.from_token(YM_TOKEN)
 imgur_client = ImgurClient(imgur_client_id, imgur_client_secret)
 
 
